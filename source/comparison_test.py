@@ -10,8 +10,8 @@ image_original = cv2.cvtColor(image_original, cv2.COLOR_RGB2GRAY)
 image_compare = cv2.cvtColor(image_compare, cv2.COLOR_RGB2GRAY)
 
 # Convert to binary
-_,image_original = cv2.threshold(image_original, 0, 60, cv2.THRESH_BINARY)
-_,image_compare = cv2.threshold(image_compare, 0, 60, cv2.THRESH_BINARY)
+_,image_original = cv2.threshold(image_original, 127, 255, 0)
+_,image_compare = cv2.threshold(image_compare, 127, 255, 0)
 
 # Resize image
 image_original = cv2.resize(image_original, (250,250))
@@ -25,7 +25,7 @@ else:
     print("Shape not equal !")
 
 # Create line
-cv2.line(image_difference,(0,125),(250,125),(255,0,0),1)
+# cv2.line(image_difference,(0,125),(250,125),(255,0,0),1)
 
 # Show image
 cv2.imshow("Original", image_original)
