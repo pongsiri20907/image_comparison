@@ -4,6 +4,12 @@ from http import client
 import paho.mqtt.client as paho
 import sys
 
+# Setting parameter
+y_top = 20
+y_low = 543
+ofset = 0.9
+image_path = "./image/M1.jpg"
+
 # Mqtt
 client = paho.Client()
 if client.connect("localhost", 1883, 60) != 0:
@@ -11,8 +17,7 @@ if client.connect("localhost", 1883, 60) != 0:
     sys.exit(-1)
 
 # Import image
-original = cv2.imread("./image/M1.jpg")
-img_compare = cv2.imread("./image/M1.jpg")
+original = cv2.imread(image_path)
 
 # Preprocessing Original image
 original_cropped = original[180:800, 530:800]
@@ -20,27 +25,30 @@ original_gray = cv2.cvtColor(original_cropped, cv2.COLOR_BGR2GRAY)
 original_blur = cv2.GaussianBlur(original_gray, (5,5), 0)
 
 # Find contour Original image
-original_edges = cv2.Canny(original_blur, 20, 70)
+# Draw line
+original_edges = cv2.Canny(original_blur, 20, 60)
 contours, heirarchy = cv2.findContours(original_edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 original_line = cv2.HoughLinesP(original_edges, 1, np.pi/180, 50, maxLineGap=50)
 if original_line is not None:
     for line in original_line:
         x1, y1, x2, y2 = line[0]
         if y1 == y2 and x2 - x1 > 150:
-            cv2.line(original_cropped, (12, 80), (249, 80), (12, 250, 0), 2)                # Top y = 80 (100%)
-            cv2.line(original_cropped, (x1, y1), (x2, y2), (0, 0, 255), 2)                  # Detect scale
-            cv2.line(original_cropped, (12,540), (249, 540), (0, 250, 0), 2)                # Low y = 540 (0%)
-            print("x1 ",x1," x2", x2)
+            cv2.line(original_cropped, (12, y_top), (249, y_top), (0, 250, 0), 1)               # Top level : 33
+            cv2.line(original_cropped, (12, y1), (249, y2), (0, 0, 255), 1)                     # Detect scale
+            cv2.line(original_cropped, (12,y_low), (249, y_low), (0, 250, 0), 1)                # Low y level : 0
+            print("y1 ",y1," y2", y2)
+            break
 
-# Calulate percentage of area
-#percentage_Area = (compare_area/original_area)*100
-#print("Percentage of area = ", f'{percentage_Area:.2f}', " %")
+# Calulate percentage
+scale_percentage = ((y_low - y1) / (y_low - y_top))*33 + ofset
+print("Scale = ", scale_percentage)
 
 # Send mqtt
-#client.publish("test", f'{percentage_Area:.2f}', 0)
+client.publish("test", f'{scale_percentage:.2f}', 0)
 
 # Show image
 cv2.imshow("Original", original_cropped)
+cv2.imshow("Edge", original_edges)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
